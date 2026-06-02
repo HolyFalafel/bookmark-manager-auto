@@ -142,6 +142,32 @@
             background: #da190b;
         }
 
+        .edit-btn {
+            background: #2196F3;
+            padding: 8px 16px;
+            font-size: 13px;
+            margin-left: 15px;
+        }
+
+        .edit-btn:hover {
+            background: #0b7dda;
+        }
+
+        .bookmark-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .cancel-btn {
+            background: #999;
+            padding: 12px 24px;
+            margin-left: 10px;
+        }
+
+        .cancel-btn:hover {
+            background: #777;
+        }
+
         .error {
             color: #f44336;
             font-size: 13px;
@@ -177,7 +203,8 @@
                 <input type="text" id="category" placeholder="e.g., Work, Personal, Resources" required>
             </div>
 
-            <button type="submit">Add Bookmark</button>
+            <button type="submit" id="submitBtn">Add Bookmark</button>
+            <button type="button" class="cancel-btn" id="cancelBtn" style="display: none;">Cancel</button>
         </form>
     </div>
 
@@ -196,10 +223,14 @@
                 this.form = document.getElementById('bookmarkForm');
                 this.bookmarksList = document.getElementById('bookmarksList');
                 this.searchInput = document.getElementById('search');
+                this.submitBtn = document.getElementById('submitBtn');
+                this.cancelBtn = document.getElementById('cancelBtn');
                 this.searchQuery = '';
+                this.editingId = null;
 
                 this.form.addEventListener('submit', (e) => this.handleSubmit(e));
                 this.searchInput.addEventListener('input', (e) => this.handleSearch(e));
+                this.cancelBtn.addEventListener('click', () => this.cancelEdit());
                 this.renderBookmarks();
             }
 
@@ -226,14 +257,29 @@
 
                 document.getElementById('urlError').style.display = 'none';
 
-                const bookmark = {
-                    id: Date.now(),
-                    url,
-                    title,
-                    category
-                };
+                if (this.editingId) {
+                    const index = this.bookmarks.findIndex(b => b.id === this.editingId);
+                    if (index !== -1) {
+                        this.bookmarks[index] = {
+                            id: this.editingId,
+                            url,
+                            title,
+                            category
+                        };
+                    }
+                    this.editingId = null;
+                    this.submitBtn.textContent = 'Add Bookmark';
+                    this.cancelBtn.style.display = 'none';
+                } else {
+                    const bookmark = {
+                        id: Date.now(),
+                        url,
+                        title,
+                        category
+                    };
+                    this.bookmarks.push(bookmark);
+                }
 
-                this.bookmarks.push(bookmark);
                 this.saveBookmarks();
                 this.renderBookmarks();
                 this.form.reset();
@@ -246,6 +292,29 @@
                 } catch (_) {
                     return false;
                 }
+            }
+
+            editBookmark(id) {
+                const bookmark = this.bookmarks.find(b => b.id === id);
+                if (!bookmark) return;
+
+                document.getElementById('url').value = bookmark.url;
+                document.getElementById('title').value = bookmark.title;
+                document.getElementById('category').value = bookmark.category;
+
+                this.editingId = id;
+                this.submitBtn.textContent = 'Update Bookmark';
+                this.cancelBtn.style.display = 'inline-block';
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            cancelEdit() {
+                this.editingId = null;
+                this.submitBtn.textContent = 'Add Bookmark';
+                this.cancelBtn.style.display = 'none';
+                this.form.reset();
+                document.getElementById('urlError').style.display = 'none';
             }
 
             deleteBookmark(id) {
@@ -309,7 +378,10 @@
                                     <div class="bookmark-title">${this.escapeHtml(bookmark.title)}</div>
                                     <a href="${this.escapeHtml(bookmark.url)}" target="_blank" class="bookmark-url">${this.escapeHtml(bookmark.url)}</a>
                                 </div>
-                                <button class="delete-btn" onclick="bookmarkManager.deleteBookmark(${bookmark.id})">Delete</button>
+                                <div class="bookmark-actions">
+                                    <button class="edit-btn" onclick="bookmarkManager.editBookmark(${bookmark.id})">Edit</button>
+                                    <button class="delete-btn" onclick="bookmarkManager.deleteBookmark(${bookmark.id})">Delete</button>
+                                </div>
                             </div>
                         `;
                     });
