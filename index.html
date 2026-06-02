@@ -182,6 +182,10 @@
     </div>
 
     <div class="bookmarks-container">
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label for="search">Search Bookmarks</label>
+            <input type="text" id="search" placeholder="Search by title, URL, or category...">
+        </div>
         <div id="bookmarksList"></div>
     </div>
 
@@ -191,8 +195,11 @@
                 this.bookmarks = this.loadBookmarks();
                 this.form = document.getElementById('bookmarkForm');
                 this.bookmarksList = document.getElementById('bookmarksList');
+                this.searchInput = document.getElementById('search');
+                this.searchQuery = '';
 
                 this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+                this.searchInput.addEventListener('input', (e) => this.handleSearch(e));
                 this.renderBookmarks();
             }
 
@@ -247,9 +254,26 @@
                 this.renderBookmarks();
             }
 
-            groupByCategory() {
+            handleSearch(e) {
+                this.searchQuery = e.target.value.toLowerCase();
+                this.renderBookmarks();
+            }
+
+            filterBookmarks() {
+                if (!this.searchQuery) {
+                    return this.bookmarks;
+                }
+
+                return this.bookmarks.filter(bookmark => {
+                    return bookmark.title.toLowerCase().includes(this.searchQuery) ||
+                           bookmark.url.toLowerCase().includes(this.searchQuery) ||
+                           bookmark.category.toLowerCase().includes(this.searchQuery);
+                });
+            }
+
+            groupByCategory(bookmarks = this.bookmarks) {
                 const grouped = {};
-                this.bookmarks.forEach(bookmark => {
+                bookmarks.forEach(bookmark => {
                     if (!grouped[bookmark.category]) {
                         grouped[bookmark.category] = [];
                     }
@@ -259,12 +283,19 @@
             }
 
             renderBookmarks() {
+                const filteredBookmarks = this.filterBookmarks();
+
                 if (this.bookmarks.length === 0) {
                     this.bookmarksList.innerHTML = '<div class="empty-state">No bookmarks yet. Add your first bookmark above!</div>';
                     return;
                 }
 
-                const grouped = this.groupByCategory();
+                if (filteredBookmarks.length === 0) {
+                    this.bookmarksList.innerHTML = '<div class="empty-state">No bookmarks match your search.</div>';
+                    return;
+                }
+
+                const grouped = this.groupByCategory(filteredBookmarks);
                 let html = '';
 
                 Object.keys(grouped).sort().forEach(category => {
