@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookmark Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .form-container {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        .bookmarks-container {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .category-section {
+            margin-bottom: 30px;
+        }
+
+        .category-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .category-title {
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #4CAF50;
+        }
+
+        .bookmark-item {
+            padding: 12px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .bookmark-item:hover {
+            background: #f9f9f9;
+        }
+
+        .bookmark-info {
+            flex: 1;
+        }
+
+        .bookmark-title {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .bookmark-url {
+            color: #0066cc;
+            text-decoration: none;
+            font-size: 14px;
+            word-break: break-all;
+        }
+
+        .bookmark-url:hover {
+            text-decoration: underline;
+        }
+
+        .delete-btn {
+            background: #f44336;
+            padding: 8px 16px;
+            font-size: 13px;
+            margin-left: 15px;
+        }
+
+        .delete-btn:hover {
+            background: #da190b;
+        }
+
+        .error {
+            color: #f44336;
+            font-size: 13px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bookmark Manager</h1>
+
+    <div class="form-container">
+        <form id="bookmarkForm">
+            <div class="form-group">
+                <label for="url">URL</label>
+                <input type="url" id="url" placeholder="https://example.com" required>
+                <div class="error" id="urlError">Please enter a valid URL</div>
+            </div>
+
+            <div class="form-group">
+                <label for="title">Title</label>
+                <input type="text" id="title" placeholder="Bookmark title" required>
+            </div>
+
+            <div class="form-group">
+                <label for="category">Category</label>
+                <input type="text" id="category" placeholder="e.g., Work, Personal, Resources" required>
+            </div>
+
+            <button type="submit">Add Bookmark</button>
+        </form>
+    </div>
+
+    <div class="bookmarks-container">
+        <div id="bookmarksList"></div>
+    </div>
+
+    <script>
+        class BookmarkManager {
+            constructor() {
+                this.bookmarks = this.loadBookmarks();
+                this.form = document.getElementById('bookmarkForm');
+                this.bookmarksList = document.getElementById('bookmarksList');
+
+                this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+                this.renderBookmarks();
+            }
+
+            loadBookmarks() {
+                const stored = localStorage.getItem('bookmarks');
+                return stored ? JSON.parse(stored) : [];
+            }
+
+            saveBookmarks() {
+                localStorage.setItem('bookmarks', JSON.stringify(this.bookmarks));
+            }
+
+            handleSubmit(e) {
+                e.preventDefault();
+
+                const url = document.getElementById('url').value.trim();
+                const title = document.getElementById('title').value.trim();
+                const category = document.getElementById('category').value.trim();
+
+                if (!this.isValidUrl(url)) {
+                    document.getElementById('urlError').style.display = 'block';
+                    return;
+                }
+
+                document.getElementById('urlError').style.display = 'none';
+
+                const bookmark = {
+                    id: Date.now(),
+                    url,
+                    title,
+                    category
+                };
+
+                this.bookmarks.push(bookmark);
+                this.saveBookmarks();
+                this.renderBookmarks();
+                this.form.reset();
+            }
+
+            isValidUrl(string) {
+                try {
+                    const url = new URL(string);
+                    return url.protocol === 'http:' || url.protocol === 'https:';
+                } catch (_) {
+                    return false;
+                }
+            }
+
+            deleteBookmark(id) {
+                this.bookmarks = this.bookmarks.filter(b => b.id !== id);
+                this.saveBookmarks();
+                this.renderBookmarks();
+            }
+
+            groupByCategory() {
+                const grouped = {};
+                this.bookmarks.forEach(bookmark => {
+                    if (!grouped[bookmark.category]) {
+                        grouped[bookmark.category] = [];
+                    }
+                    grouped[bookmark.category].push(bookmark);
+                });
+                return grouped;
+            }
+
+            renderBookmarks() {
+                if (this.bookmarks.length === 0) {
+                    this.bookmarksList.innerHTML = '<div class="empty-state">No bookmarks yet. Add your first bookmark above!</div>';
+                    return;
+                }
+
+                const grouped = this.groupByCategory();
+                let html = '';
+
+                Object.keys(grouped).sort().forEach(category => {
+                    html += `<div class="category-section">`;
+                    html += `<h2 class="category-title">${this.escapeHtml(category)}</h2>`;
+
+                    grouped[category].forEach(bookmark => {
+                        html += `
+                            <div class="bookmark-item">
+                                <div class="bookmark-info">
+                                    <div class="bookmark-title">${this.escapeHtml(bookmark.title)}</div>
+                                    <a href="${this.escapeHtml(bookmark.url)}" target="_blank" class="bookmark-url">${this.escapeHtml(bookmark.url)}</a>
+                                </div>
+                                <button class="delete-btn" onclick="bookmarkManager.deleteBookmark(${bookmark.id})">Delete</button>
+                            </div>
+                        `;
+                    });
+
+                    html += `</div>`;
+                });
+
+                this.bookmarksList.innerHTML = html;
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        }
+
+        const bookmarkManager = new BookmarkManager();
+    </script>
+</body>
+</html>
