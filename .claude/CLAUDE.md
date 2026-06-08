@@ -47,14 +47,14 @@ This is a simple, self-contained bookmark manager that runs entirely in the brow
 
 ## Known Issues
 
-### Critical
-1. **XSS Vulnerability**: Inline onclick handlers in edit/delete buttons (lines 382-383) bypass HTML escaping
-   - Risk: If localStorage is manipulated, malicious code could execute
-   - Fix: Replace with event delegation using data attributes
+### Critical (Fixed)
+1. ~~**XSS Vulnerability**: Inline onclick handlers in edit/delete buttons~~ ✓ Fixed
+   - Replaced inline onclick with event delegation using data attributes
+   - Added `handleBookmarkAction()` method for secure event handling
 
-2. **localStorage Corruption**: No error handling for `JSON.parse()` (line 239)
-   - Risk: App crashes on page load if data is corrupted
-   - Fix: Wrap in try-catch, return empty array on error
+2. ~~**localStorage Corruption**: No error handling for `JSON.parse()`~~ ✓ Fixed
+   - Added try-catch wrapper in `loadBookmarks()`
+   - App now returns empty array and logs error instead of crashing
 
 ### Important
 3. **ID Collision**: Using `Date.now()` for IDs can create duplicates with rapid additions

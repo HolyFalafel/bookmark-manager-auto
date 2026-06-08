@@ -231,12 +231,18 @@
                 this.form.addEventListener('submit', (e) => this.handleSubmit(e));
                 this.searchInput.addEventListener('input', (e) => this.handleSearch(e));
                 this.cancelBtn.addEventListener('click', () => this.cancelEdit());
+                this.bookmarksList.addEventListener('click', (e) => this.handleBookmarkAction(e));
                 this.renderBookmarks();
             }
 
             loadBookmarks() {
-                const stored = localStorage.getItem('bookmarks');
-                return stored ? JSON.parse(stored) : [];
+                try {
+                    const stored = localStorage.getItem('bookmarks');
+                    return stored ? JSON.parse(stored) : [];
+                } catch (e) {
+                    console.error('Failed to load bookmarks:', e);
+                    return [];
+                }
             }
 
             saveBookmarks() {
@@ -317,6 +323,19 @@
                 document.getElementById('urlError').style.display = 'none';
             }
 
+            handleBookmarkAction(e) {
+                const editBtn = e.target.closest('.edit-btn');
+                const deleteBtn = e.target.closest('.delete-btn');
+
+                if (editBtn) {
+                    const id = parseInt(editBtn.dataset.id);
+                    this.editBookmark(id);
+                } else if (deleteBtn) {
+                    const id = parseInt(deleteBtn.dataset.id);
+                    this.deleteBookmark(id);
+                }
+            }
+
             deleteBookmark(id) {
                 this.bookmarks = this.bookmarks.filter(b => b.id !== id);
                 this.saveBookmarks();
@@ -379,8 +398,8 @@
                                     <a href="${this.escapeHtml(bookmark.url)}" target="_blank" class="bookmark-url">${this.escapeHtml(bookmark.url)}</a>
                                 </div>
                                 <div class="bookmark-actions">
-                                    <button class="edit-btn" onclick="bookmarkManager.editBookmark(${bookmark.id})">Edit</button>
-                                    <button class="delete-btn" onclick="bookmarkManager.deleteBookmark(${bookmark.id})">Delete</button>
+                                    <button class="edit-btn" data-id="${bookmark.id}">Edit</button>
+                                    <button class="delete-btn" data-id="${bookmark.id}">Delete</button>
                                 </div>
                             </div>
                         `;
